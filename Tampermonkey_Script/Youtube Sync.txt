@@ -1,0 +1,104 @@
+// ==UserScript==
+// @name         YouTube Navidrome Sync
+// @namespace    youtube-sync
+// @description  Sync songs and playlists
+// @version      0.2
+// @match        https://www.youtube.com/*
+// @grant        GM_xmlhttpRequest
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    function createButton(text, onClick) {
+        const button = document.createElement('button');
+
+        button.innerText = text;
+        button.style.marginLeft = '10px';
+        button.style.padding = '8px';
+        button.style.cursor = 'pointer';
+
+        button.onclick = onClick;
+
+        return button;
+    }
+
+    function sendRequest(endpoint, data) {
+        GM_xmlhttpRequest({
+            method: 'POST',
+            url: `http://127.0.0.1:9999/${endpoint}`,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(data),
+            onload: function () {
+                alert('Queued successfully');
+            },
+            onerror: function () {
+                alert('Request failed');
+            }
+        });
+    }
+
+    function injectButtons() {
+        if (document.getElementById('navidrome-sync-button')) {
+            return;
+        }
+
+        const target = document.querySelector('#top-level-buttons-computed');
+
+        if (!target) {
+            return;
+        }
+
+        const isPlaylist = window.location.href.includes('list=');
+
+        const songButton = createButton('Download Song', () => {
+            sendRequest('download', {
+                url: window.location.href
+            });
+        });
+
+        songButton.id = 'navidrome-sync-button';
+
+        target.appendChild(songButton);
+
+        if (isPlaylist) {
+            const playlistButton = createButton('Sync Playlist', () => {
+                const playlistUrl = getPlaylistUrl();
+
+                if (!playlistUrl) {
+                    alert('Could not determine playlist URL');
+                    return;
+                }
+
+                sendRequest('sync_playlist', {
+                    url: playlistUrl
+                });
+            });
+
+            target.appendChild(playlistButton);
+        }
+    }
+
+    function getPlaylistUrl() {
+        const url = new URL(window.location.href);
+
+        const listId = url.searchParams.get('list');
+
+        if (!listId) {
+            return null;
+        }
+
+        return `https://www.youtube.com/playlist?list=${listId}`;
+    }
+
+    const observer = new MutationObserver(() => {
+        injectButtons();
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+})();

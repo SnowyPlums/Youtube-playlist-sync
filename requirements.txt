@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+aiosqlite
+sqlalchemy
+httpx
+yt-dlp
+musicbrainzngs
+mutagen
+pillow
+python-multipart

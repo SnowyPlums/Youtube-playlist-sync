@@ -1,0 +1,29 @@
+[music]
+# Local filesystem path used by downloader
+# This is where your files will be stored
+root = "/mnt/EZ_Store/music"
+artists_dir = "/mnt/EZ_Store/music/artists"
+playlists_dir = "/mnt/EZ_Store/music/playlists"
+cache_dir = "/mnt/EZ_Store/music/.cache"
+
+# Path Navidrome itself sees on the server
+# Use same path as above if files are used on local machine
+server_music_root = "/music"
+server_artists_dir = "/music/artists"
+server_playlists_dir = "/music/playlists"
+
+[database]
+path = "data/sync.db"
+
+[downloads]
+concurrent_downloads = 2
+
+[yt_dlp]
+# What browser the code will take your youtube cookies from
+cookies_browser = "firefox"
+audio_format = "opus"
+
+[musicbrainz]
+app_name = "youtube-navidrome-sync"
+version = "1.0"
+contact = "local@localhost"
