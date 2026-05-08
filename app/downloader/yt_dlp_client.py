@@ -10,7 +10,12 @@ CACHE_DIR = Path(CONFIG["music"]["cache_dir"])
 def extract_info(url: str):
     ydl_opts = {
         "quiet": True,
-        "cookiesfrombrowser": (CONFIG["yt_dlp"]["cookies_browser"],)
+        "ignoreerrors": True,
+        "extract_flat": False,
+        "skip_unavailable_fragments": True,
+        "cookiesfrombrowser": (
+            CONFIG["yt_dlp"]["cookies_browser"],
+        )
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

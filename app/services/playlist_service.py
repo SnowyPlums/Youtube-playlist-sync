@@ -61,41 +61,71 @@ async def sync_playlist(url: str):
 
         for position, entry in enumerate(info["entries"]):
             if not entry:
+                logging.warning(
+                    f"Skipping unavailable playlist entry at position {position + 1}"
+                )
                 continue
 
-            logging.info(
-                f"Processing track {position + 1}/{total_entries}: {entry['title']}"
-            )
-
-            video_url = f"https://www.youtube.com/watch?v={entry['id']}"
-
-            filepath = await download_song(video_url)
-
-            song_cursor = await db.execute(
-                "SELECT id FROM songs WHERE youtube_id = ?",
-                (entry["id"],)
-            )
-
-            song_row = await song_cursor.fetchone()
-
-            await db.execute(
-                """
-                INSERT OR REPLACE INTO playlist_songs (
-                    playlist_id,
-                    song_id,
-                    position
-                ) VALUES (?, ?, ?)
-                """,
-                (
-                    internal_playlist_id,
-                    song_row["id"],
-                    position
+            if not entry.get("id"):
+                logging.warning(
+                    f"Skipping playlist entry with missing video id at position {position + 1}"
                 )
-            )
+                continue
 
-            await db.commit()
+            try:
+                logging.info(
+                    f"Processing track {position + 1}/{total_entries}: {entry.get('title', 'Unknown Title')}"
+                )
 
-            tracks.append(filepath)
+                video_url = (
+                    f"https://www.youtube.com/watch?v={entry['id']}"
+                )
+
+                filepath = await download_song(video_url)
+
+                if not filepath:
+                    logging.warning(
+                        f"Song download returned no filepath: {entry['id']}"
+                    )
+                    continue
+
+                song_cursor = await db.execute(
+                    "SELECT id FROM songs WHERE youtube_id = ?",
+                    (entry["id"],)
+                )
+
+                song_row = await song_cursor.fetchone()
+
+                if not song_row:
+                    logging.warning(
+                        f"Song missing from database after download: {entry['id']}"
+                    )
+                    continue
+
+                await db.execute(
+                    """
+                    INSERT OR REPLACE INTO playlist_songs (
+                        playlist_id,
+                        song_id,
+                        position
+                    ) VALUES (?, ?, ?)
+                    """,
+                    (
+                        internal_playlist_id,
+                        song_row["id"],
+                        position
+                    )
+                )
+
+                await db.commit()
+
+                tracks.append(filepath)
+
+            except Exception:
+                logging.exception(
+                    f"Failed processing playlist entry: {entry.get('id')}"
+                )
+                continue
 
         logging.info("Regenerating M3U playlist")
 
