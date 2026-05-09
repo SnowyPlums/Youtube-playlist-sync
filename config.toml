@@ -1,13 +1,14 @@
 [music]
-# Local filesystem path used by downloader
-# This is where your files will be stored
-root = "/mnt/EZ_Store/music"
-artists_dir = "/mnt/EZ_Store/music/artists"
-playlists_dir = "/mnt/EZ_Store/music/playlists"
-cache_dir = "/mnt/EZ_Store/music/.cache"
+# Local filesystem paths used by the downloader.
+# Replace /YOUR-ROOT-PATH with the folder where you want music stored.
+root = "/YOUR-ROOT-PATH"
+artists_dir = "/YOUR-ROOT-PATH/artists"
+playlists_dir = "/YOUR-ROOT-PATH/playlists"
+cache_dir = "/YOUR-ROOT-PATH/.cache"
 
-# Path Navidrome itself sees on the server
-# Use same path as above if files are used on local machine
+# Paths Navidrome sees on the server/container.
+# Use the same paths as above if Navidrome reads the files directly from
+# this machine. Use container paths if Navidrome sees a mapped volume.
 server_music_root = "/music"
 server_artists_dir = "/music/artists"
 server_playlists_dir = "/music/playlists"
@@ -20,10 +21,49 @@ concurrent_downloads = 2
 
 [yt_dlp]
 # What browser the code will take your youtube cookies from
+# Common options: "firefox", "chrome", "chromium", "brave", "edge"
 cookies_browser = "firefox"
-audio_format = "opus"
+
+# yt-dlp extraction settings
+quiet_extract = true
+ignore_errors = true
+extract_flat = false
+skip_unavailable_fragments = true
+
+# yt-dlp download settings
+# Common audio formats:
+# - "bestaudio[ext=webm]/bestaudio" works well with opus
+# - "bestaudio/best" lets yt-dlp choose the best available source
+format = "bestaudio[ext=webm]/bestaudio"
+quiet_download = false
+noplaylist = true
+
+# FFmpegExtractAudio postprocessor settings
+# Supported tag-writing combinations:
+# - preferredcodec = "opus", output_extension = "opus"
+# - preferredcodec = "mp3", output_extension = "mp3"
+preferredcodec = "opus"
+# Common quality values:
+# - opus: "128", "160", "192"
+# - mp3: "192", "256", "320"
+preferredquality = "192"
+output_extension = "opus"
 
 [musicbrainz]
 app_name = "youtube-navidrome-sync"
 version = "1.0"
 contact = "local@localhost"
+
+[cover_art_archive]
+enabled = true
+# Cover Art Archive artwork URLs are stable, so this is effectively long-lived.
+cache_ttl_days = 3650
+
+[lastfm]
+enabled = false
+# Create an API account/key at https://www.last.fm/api/account/create
+api_key = ""
+cache_ttl_days = 365
+top_tags_limit = 5
+request_delay_seconds = 0.25
+download_artist_artwork = true

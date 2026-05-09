@@ -6,7 +6,9 @@ from app.downloader.yt_dlp_client import extract_info, download_audio
 from app.downloader.metadata import enrich_metadata
 from app.downloader.tagging import write_tags
 from app.downloader.artwork import download_artwork
+from app.downloader.cover_art_archive import cover_art_url, cache_ttl_days
 from app.utils.filesystem import build_song_path
+from app.core.config import CONFIG
 
 
 async def song_exists(youtube_id: str):
@@ -64,14 +66,41 @@ async def download_song(url: str):
     logging.info("Writing metadata tags")
 
     cover_path = song_path.parent / "cover.jpg"
+    metadata["cover_art_url"] = cover_art_url(
+        metadata.get("musicbrainz_release_id")
+    )
 
     if not cover_path.exists():
         logging.info("Downloading album artwork")
 
-        await download_artwork(
-            metadata.get("thumbnail"),
-            cover_path
+        downloaded_cover = await download_artwork(
+            metadata.get("cover_art_url"),
+            cover_path,
+            cache_key=f"cover:{metadata.get('musicbrainz_release_id')}",
+            ttl_days=cache_ttl_days()
         )
+
+        if not downloaded_cover:
+            metadata["cover_art_url"] = metadata.get("thumbnail")
+            await download_artwork(
+                metadata.get("thumbnail"),
+                cover_path,
+                cache_key=f"youtube-thumbnail:{youtube_id}"
+            )
+
+    if (
+        CONFIG.get("lastfm", {}).get("download_artist_artwork", True)
+        and metadata.get("artist_artwork_url")
+    ):
+        artist_artwork_path = song_path.parent.parent / "artist.jpg"
+
+        if not artist_artwork_path.exists():
+            logging.info("Downloading artist artwork")
+            await download_artwork(
+                metadata.get("artist_artwork_url"),
+                artist_artwork_path,
+                cache_key=f"artist:{metadata.get('musicbrainz_artist_id') or metadata['artist']}"
+            )
 
     logging.info("Writing metadata tags")
 
@@ -89,24 +118,36 @@ async def download_song(url: str):
                 title,
                 artist,
                 album,
+                album_date,
+                album_year,
+                genres,
                 duration,
                 filepath,
                 thumbnail_url,
+                cover_art_url,
+                artist_artwork_url,
                 metadata_source,
+                lastfm_url,
                 musicbrainz_recording_id,
                 musicbrainz_release_id,
                 musicbrainz_artist_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 youtube_id,
                 metadata["title"],
                 metadata["artist"],
                 metadata["album"],
+                metadata.get("album_date"),
+                metadata.get("album_year"),
+                ", ".join(metadata.get("genres", [])),
                 metadata["duration"],
                 str(song_path),
                 metadata.get("thumbnail"),
+                metadata.get("cover_art_url"),
+                metadata.get("artist_artwork_url"),
                 metadata["source"],
+                metadata.get("lastfm_url"),
                 metadata.get("musicbrainz_recording_id"),
                 metadata.get("musicbrainz_release_id"),
                 metadata.get("musicbrainz_artist_id")

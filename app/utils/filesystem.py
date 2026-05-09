@@ -20,7 +20,9 @@ def build_song_path(artist: str, album: str, title: str) -> Path:
 
     title = sanitize_filename(title or "Unknown Track")
 
-    return ARTISTS_DIR / artist / album / f"{title}.opus"
+    extension = CONFIG.get("yt_dlp", {}).get("output_extension", "opus")
+
+    return ARTISTS_DIR / artist / album / f"{title}.{extension}"
 
 
 

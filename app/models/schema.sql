@@ -6,6 +6,9 @@ CREATE TABLE IF NOT EXISTS songs (
     title TEXT,
     artist TEXT,
     album TEXT,
+    album_date TEXT,
+    album_year INTEGER,
+    genres TEXT,
 
     track_number INTEGER,
     duration INTEGER,
@@ -14,8 +17,11 @@ CREATE TABLE IF NOT EXISTS songs (
     audio_hash TEXT,
 
     thumbnail_url TEXT,
+    cover_art_url TEXT,
+    artist_artwork_url TEXT,
 
     metadata_source TEXT,
+    lastfm_url TEXT,
 
     musicbrainz_recording_id TEXT,
     musicbrainz_release_id TEXT,
