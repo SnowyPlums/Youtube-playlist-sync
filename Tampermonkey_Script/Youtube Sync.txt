@@ -10,13 +10,56 @@
 (function () {
     'use strict';
 
-    function createButton(text, onClick) {
+    function createButton(text, icon, onClick) {
         const button = document.createElement('button');
 
-        button.innerText = text;
+        // Reset native styles
+        button.style.appearance = 'none';
+        button.style.border = 'none';
+        button.style.outline = 'none';
+
+        // Layout
+        button.style.display = 'flex';
+        button.style.alignItems = 'center';
+        button.style.gap = '8px';
+
+        // Styling
         button.style.marginLeft = '10px';
-        button.style.padding = '8px';
+        button.style.padding = '8px 14px';
+        button.style.height = '36px';
+
         button.style.cursor = 'pointer';
+
+        button.style.backgroundColor = '#272727';
+        button.style.color = '#ffffff';
+
+        button.style.borderRadius = '20px';
+
+        button.style.fontFamily = 'Roboto, Arial, sans-serif';
+        button.style.fontSize = '14px';
+        button.style.fontWeight = '500';
+
+        // Icon
+        const iconSpan = document.createElement('span');
+        iconSpan.textContent = icon;
+        iconSpan.style.fontSize = '16px';
+        iconSpan.style.lineHeight = '1';
+
+        // Text
+        const textSpan = document.createElement('span');
+        textSpan.textContent = text;
+
+        button.appendChild(iconSpan);
+        button.appendChild(textSpan);
+
+        // Hover
+        button.onmouseenter = () => {
+            button.style.backgroundColor = '#3a3a3a';
+        };
+
+        button.onmouseleave = () => {
+            button.style.backgroundColor = '#272727';
+        };
 
         button.onclick = onClick;
 
@@ -31,9 +74,11 @@
                 'Content-Type': 'application/json'
             },
             data: JSON.stringify(data),
+
             onload: function () {
                 alert('Queued successfully');
             },
+
             onerror: function () {
                 alert('Request failed');
             }
@@ -53,29 +98,37 @@
 
         const isPlaylist = window.location.href.includes('list=');
 
-        const songButton = createButton('Download Song', () => {
-            sendRequest('download', {
-                url: window.location.href
-            });
-        });
+        const songButton = createButton(
+            'Download Song',
+            '⬇',
+            () => {
+                sendRequest('download', {
+                    url: window.location.href
+                });
+            }
+        );
 
         songButton.id = 'navidrome-sync-button';
 
         target.appendChild(songButton);
 
         if (isPlaylist) {
-            const playlistButton = createButton('Sync Playlist', () => {
-                const playlistUrl = getPlaylistUrl();
+            const playlistButton = createButton(
+                'Sync Playlist',
+                '⟳',
+                () => {
+                    const playlistUrl = getPlaylistUrl();
 
-                if (!playlistUrl) {
-                    alert('Could not determine playlist URL');
-                    return;
+                    if (!playlistUrl) {
+                        alert('Could not determine playlist URL');
+                        return;
+                    }
+
+                    sendRequest('sync_playlist', {
+                        url: playlistUrl
+                    });
                 }
-
-                sendRequest('sync_playlist', {
-                    url: playlistUrl
-                });
-            });
+            );
 
             target.appendChild(playlistButton);
         }
